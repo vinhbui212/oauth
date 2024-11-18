@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Admin Dashboard</title>
+</head>
+<body onload="fetchAdminPage()"> <!-- Fetch admin data when the page loads -->
+
+<h1>Admin Dashboard</h1>
+
+<h2>List of Users</h2>
+<ul id="userList"></ul>
+
+<script>
+    // Function to fetch protected resource (admin page)
+    function fetchAdminPage() {
+        const token = localStorage.getItem('jwtToken');  // Retrieve the JWT from localStorage
+
+        if (!token) {
+            alert("No token found, please log in.");
+            window.location.href = "/api/auth/login";  // Redirect to login if no token is found
+            return;
+        }
+
+        fetch('/api/admin/all', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token,  // Pass the JWT in the Authorization header
+                'Content-Type': 'application/json'   // Set content type
+            }
+        })
+            .then(response => {
+                if (response.status === 200) {
+                    return response.json();  // Parse JSON response if successful
+                } else if (response.status === 401) {
+                    throw new Error('Unauthorized: Invalid or expired token');
+                } else {
+                    throw new Error('Failed to load admin page.');
+                }
+            })
+            .then(data => {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '';  // Clear previous list
+                data.forEach(user => {
+                    const li = document.createElement('li');
+                    li.textContent = user.username;  // Add each user's username to the list
+                    userList.appendChild(li);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error.message);
+                alert('Access denied. Please log in as an admin.');
+                window.location.href = "/api/auth/login";  // Redirect to login if access is denied
+            });
+    }
+
+</script>
+
+</body>
+</html>
